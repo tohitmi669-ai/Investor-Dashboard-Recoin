@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>RE-COIN · History Botol & Tarik Investasi</title>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js">
+    </script>
+    
+    <!-- Font Awesome 6 (free) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+        }
+
+        body {
+            background: #f4f7fc;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .card {
+            max-width: 720px;
+            width: 100%;
+            background: white;
+            border-radius: 36px;
+            box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.15);
+            padding: 24px 20px 32px;
+            transition: 0.2s;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 22px;
+        }
+
+        .header i {
+            font-size: 28px;
+            color: #00b894;
+            background: #e0f2ef;
+            padding: 12px;
+            border-radius: 18px;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            letter-spacing: -0.2px;
+        }
+
+        .header span {
+            background: #d1fae5;
+            color: #065f46;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 14px;
+            border-radius: 40px;
+            margin-left: 8px;
+        }
+
+        /* Stats Cards - Hanya 3 Kartu */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 18px 16px;
+            border: 1px solid #eef2f6;
+            text-align: center;
+            transition: 0.2s;
+            position: relative;
+        }
+
+        .stat-card:hover {
+            border-color: #00b894;
+            background: #f0fdfa;
+        }
+
+        .stat-card .stat-icon {
+            font-size: 28px;
+            color: #00b894;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .stat-card .stat-label {
+            font-size: 13px;
+            color: #64748b;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .stat-card .stat-value.rupiah {
+            color: #0b7e66;
+        }
+
+        /* card khusus saldo investasi */
+        .stat-card.saldo-card {
+            background: linear-gradient(145deg, #f0fdfa, #e6f7f2);
+            border-color: #0b7e66;
+        }
+
+        .stat-card.saldo-card .stat-value {
+            color: #0b7e66;
+        }
+
+        /* tombol tarik investasi */
+        .invest-action {
+            display: flex;
+            justify-content: center;
+            margin-top: 6px;
+        }
+
+        .btn-withdraw {
+            background: #0b7e66;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 6px 16px rgba(11, 126, 102, 0.25);
+            transition: 0.2s;
+            cursor: pointer;
+            border: 1px solid transparent;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .btn-withdraw i {
+            font-size: 20px;
+        }
+
+        .btn-withdraw:hover {
+            background: #0a6b56;
+            box-shadow: 0 8px 20px rgba(11, 126, 102, 0.35);
+            transform: scale(1.01);
+        }
+
+        .btn-withdraw:active {
+            transform: scale(0.97);
+        }
+
+        .btn-withdraw:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .min-withdraw-note {
+            background: #fef9e7;
+            padding: 12px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            color: #7c6b2b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 16px 0 6px;
+            border: 1px solid #f8e7b0;
+            justify-content: center;
+        }
+
+        .min-withdraw-note i {
+            color: #b48c28;
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin: 12px 0 0;
+            font-size: 13px;
+            color: #475569;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 44px;
+        }
+
+        .status-bar i {
+            color: #00b894;
+            font-size: 14px;
+        }
+
+        .status-bar .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            padding: 20px;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal-box {
+            background: white;
+            max-width: 480px;
+            width: 100%;
+            border-radius: 40px;
+            padding: 28px 24px 32px;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.25);
+            animation: fadeIn 0.25s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.96) translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+        }
+
+        .modal-header h3 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .modal-header h3 i {
+            color: #0b7e66;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: 0.15s;
+            padding: 4px 8px;
+            border-radius: 40px;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .modal-body {
+            margin: 8px 0 22px;
+        }
+
+        .modal-body p {
+            color: #334155;
+            font-weight: 500;
+            margin-bottom: 14px;
+        }
+
+        .payment-options {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .payment-option {
+            background: #f8fafc;
+            border: 2px solid #e9edf2;
+            border-radius: 60px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            cursor: pointer;
+            transition: 0.15s;
+            font-weight: 600;
+            color: #1e293b;
+        }
+
+        .payment-option i {
+            font-size: 24px;
+            width: 32px;
+            color: #0b7e66;
+        }
+
+        .payment-option:hover {
+            background: #f1f5f9;
+            border-color: #0b7e66;
+        }
+
+        .payment-option.selected {
+            border-color: #0b7e66;
+            background: #e6f7f2;
+            box-shadow: 0 0 0 3px rgba(11, 126, 102, 0.1);
+        }
+
+        .payment-option .bank-label {
+            font-weight: 500;
+            color: #1e293b;
+        }
+
+        .payment-option .bank-desc {
+            font-weight: 400;
+            font-size: 13px;
+            color: #64748b;
+            margin-left: auto;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .btn-cairkan {
+            background: #0b7e66;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 60px;
+            color: white;
+            font-weight: 700;
+            font-size: 17px;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-cairkan i {
+            font-size: 18px;
+        }
+
+        .btn-cairkan:hover {
+            background: #0a6b56;
+        }
+
+        .btn-cairkan:disabled {
+            opacity: 0.4;
+            pointer-events: none;
+        }
+
+        .btn-batal {
+            background: transparent;
+            border: 2px solid #e2e8f0;
+            padding: 14px 22px;
+            border-radius: 60px;
+            font-weight: 600;
+            color: #475569;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        .btn-batal:hover {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+        }
+
+        /* Info box di modal */
+        .info-box-warning {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #fef3c7;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+        }
+
+        .info-box-warning i {
+            margin-right: 6px;
+        }
+
+        .info-box-success {
+            margin-top: 10px;
+            padding: 10px 14px;
+            background: #d1fae5;
+            border-radius: 16px;
+            font-size: 13px;
+            color: #065f46;
+            border: 1px solid #6ee7b7;
+        }
+
+        .info-box-success i {
+            margin-right: 6px;
+        }
+
+        /* responsive */
+        @media (max-width: 600px) {
+            .card {
+                padding: 16px 14px 24px;
+                border-radius: 28px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .stat-card {
+                padding: 14px 12px;
+            }
+            .stat-card .stat-value {
+                font-size: 20px;
+            }
+            .btn-withdraw {
+                padding: 16px 20px;
+                font-size: 16px;
+            }
+            .modal-box {
+                padding: 24px 18px 28px;
+            }
+            .modal-footer {
+                flex-direction: column;
+            }
+            .btn-batal {
+                text-align: center;
+            }
+            .payment-option {
+                padding: 12px 16px;
+            }
+            .status-bar {
+                font-size: 12px;
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card" id="app">
+        <!-- header -->
+        <div class="header">
+            <i class="fas fa-recycle"></i>
+            <h1>RE-COIN <span>Investasi</span></h1>
+        </div>
+
+        <!-- 3 Kartu Statistik: Total Botol, Saldo Investasi, Total Transaksi -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <span class="stat-icon"><i class="fas fa-wine-bottle"></i></span>
+                <div class="stat-label">Total Botol Terkumpul</div>
+                <div class="stat-value" id="totalBotolDisplay">0</div>
+            </div>
+            <div class="stat-card saldo-card">
+                <span class="stat-icon"><i class="fas fa-coins"></i></span>
+                <div class="stat-label">Saldo Investasi</div>
+                <div class="stat-value rupiah" id="totalRupiahDisplay">Rp 0</div>
+            </div>
+            <div class="stat-card">
+                <span class="stat-icon"><i class="fas fa-exchange-alt"></i></span>
+                <div class="stat-label">Total Transaksi</div>
+                <div class="stat-value" id="totalTransaksiDisplay">0</div>
+            </div>
+        </div>
+
+        <!-- tombol tarik investasi -->
+        <div class="invest-action">
+            <button class="btn-withdraw" id="btnTarikInvestasi">
+                <i class="fas fa-hand-holding-usd"></i> Tarik Investasi
+            </button>
+        </div>
+
+        <!-- status bar -->
+        <div class="status-bar" id="statusBar">
+            <i class="fas fa-circle" id="statusIcon" style="color: #00b894; font-size: 10px;"></i>
+            <span id="statusText">Siap</span>
+        </div>
+
+        <!-- catatan minimal -->
+        <div class="min-withdraw-note">
+            <i class="fas fa-info-circle"></i> Minimal penarikan <strong>Rp 50.000</strong> · verifikasi via WhatsApp
+        </div>
+    </div>
+
+    <!-- MODAL METODE PEMBAYARAN -->
+    <div class="modal-overlay" id="modalWithdraw">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3><i class="fas fa-credit-card"></i> Metode Pembayaran</h3>
+                <button class="modal-close" id="closeModalBtn">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>Pilih metode penarikan investasi:</p>
+                <div class="payment-options" id="paymentOptions">
+                    <div class="payment-option" data-method="bca">
+                        <i class="fas fa-university"></i>
+                        <span class="bank-label">BCA</span>
+                        <span class="bank-desc">Transfer Bank</span>
+                    </div>
+                    <div class="payment-option" data-method="bri">
+                        <i class="fas fa-university"></i>
+                        <span class="bank-label">BRI</span>
+                        <span class="bank-desc">Transfer Bank</span>
+                    </div>
+                    <div class="payment-option" data-method="mandiri">
+                        <i class="fas fa-university"></i>
+                        <span class="bank-label">Mandiri</span>
+                        <span class="bank-desc">Transfer Bank</span>
+                    </div>
+                    <div class="payment-option" data-method="dana">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span class="bank-label">DANA</span>
+                        <span class="bank-desc">E-Wallet</span>
+                    </div>
+                    <div class="payment-option" data-method="ovo">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span class="bank-label">OVO</span>
+                        <span class="bank-desc">E-Wallet</span>
+                    </div>
+                </div>
+                <div style="margin-top: 12px; font-size: 14px; color: #475569;">
+                    <i class="fas fa-check-circle" style="color: #0b7e66;"></i> Pilih satu metode, lalu klik <strong>Cairkan</strong>
+                </div>
+
+                <!-- INFO: Data akan diarsipkan -->
+                <div class="info-box-success">
+                    <i class="fas fa-archive"></i> <strong>Data akan diarsipkan</strong><br>
+                    History botol tetap tersimpan di dashboard admin untuk keperluan audit.
+                </div>
+
+                <div class="info-box-warning">
+                    <i class="fas fa-exclamation-triangle"></i> <strong>Perhatian:</strong> 
+                    Setelah penarikan berhasil, <u>saldo investasi akan menjadi 0</u>.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cairkan" id="btnCairkan">
+                    <i class="fas fa-paper-plane"></i> Cairkan
+                </button>
+                <button class="btn-batal" id="btnBatalModal">Batal</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===================== FIREBASE =====================
+        const firebaseConfig = {
+            databaseURL: "https://re-coin-magelang-2026-default-rtdb.asia-southeast1.firebasedatabase.app"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // ===================== VARIABEL GLOBAL =====================
+        const HARGA_PER_BOTOL = 50; // 50 rupiah per botol
+        const MIN_WITHDRAW = 50000; // 50 ribu rupiah
+        const WHATSAPP_NUMBER = '089524538835'; // untuk verifikasi
+
+        let allHistory = [];
+        let selectedMethod = null;
+        let isProcessing = false;
+
+        // ===================== DOM REF =====================
+        const totalBotolDisplay = document.getElementById('totalBotolDisplay');
+        const totalRupiahDisplay = document.getElementById('totalRupiahDisplay');
+        const totalTransaksiDisplay = document.getElementById('totalTransaksiDisplay');
+        const statusText = document.getElementById('statusText');
+        const statusIcon = document.getElementById('statusIcon');
+
+        const btnTarik = document.getElementById('btnTarikInvestasi');
+        const modal = document.getElementById('modalWithdraw');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const btnBatalModal = document.getElementById('btnBatalModal');
+        const btnCairkan = document.getElementById('btnCairkan');
+        const paymentOptions = document.getElementById('paymentOptions');
+
+        // ===================== SET STATUS =====================
+        function setStatus(message, type = 'info') {
+            statusText.textContent = message;
+            if (type === 'loading') {
+                statusIcon.className = 'fas fa-spinner spinner';
+                statusIcon.style.color = '#0b7e66';
+                statusIcon.style.fontSize = '14px';
+            } else if (type === 'success') {
+                statusIcon.className = 'fas fa-check-circle';
+                statusIcon.style.color = '#0b7e66';
+                statusIcon.style.fontSize = '14px';
+            } else if (type === 'error') {
+                statusIcon.className = 'fas fa-exclamation-circle';
+                statusIcon.style.color = '#ef4444';
+                statusIcon.style.fontSize = '14px';
+            } else if (type === 'archive') {
+                statusIcon.className = 'fas fa-archive';
+                statusIcon.style.color = '#f59e0b';
+                statusIcon.style.fontSize = '14px';
+            } else {
+                statusIcon.className = 'fas fa-circle';
+                statusIcon.style.color = '#00b894';
+                statusIcon.style.fontSize = '10px';
+            }
+        }
+
+        // ===================== LOAD HISTORY =====================
+        function loadHistory() {
+            setStatus('Memuat data...', 'loading');
+
+            db.ref('/botol_history').once('value', (snap) => {
+                const raw = snap.val() || {};
+                allHistory = [];
+
+                let totalBotol = 0;
+
+                for (let userId in raw) {
+                    for (let ts in raw[userId]) {
+                        const item = raw[userId][ts];
+                        const botol = item.botol || 0;
+                        allHistory.push({
+                            userId: userId,
+                            timestamp: parseInt(ts),
+                            botol: botol,
+                            machine: item.machine || '—'
+                        });
+                        totalBotol += botol;
+                    }
+                }
+
+                allHistory.sort((a, b) => b.timestamp - a.timestamp);
+
+                const totalRupiah = totalBotol * HARGA_PER_BOTOL;
+                totalBotolDisplay.textContent = totalBotol.toLocaleString();
+                totalRupiahDisplay.textContent = 'Rp ' + totalRupiah.toLocaleString('id-ID');
+                totalTransaksiDisplay.textContent = allHistory.length;
+
+                setStatus(`${allHistory.length} transaksi, ${totalBotol} botol terkumpul`, 'success');
+                console.log(`✅ Data dimuat: ${allHistory.length} transaksi, ${totalBotol} botol`);
+
+            }).catch((error) => {
+                console.error('Error loading data:', error);
+                totalBotolDisplay.textContent = 'Error';
+                totalRupiahDisplay.textContent = 'Error';
+                totalTransaksiDisplay.textContent = 'Error';
+                setStatus('Gagal memuat data: ' + error.message, 'error');
+            });
+        }
+
+        // ===================== FUNGSI ARSIP + RESET SALDO =====================
+        async function arsipDanResetSaldo() {
+            try {
+                setStatus('📦 Mengarsipkan data history...', 'archive');
+
+                // 1. Ambil semua data botol_history
+                const snapshot = await db.ref('/botol_history').once('value');
+                const data = snapshot.val() || {};
+
+                if (Object.keys(data).length === 0) {
+                    setStatus('Tidak ada data yang diarsipkan', 'info');
+                    return false;
+                }
+
+                // 2. Hitung total botol dan rupiah
+                let totalBotol = 0;
+                let totalTransaksi = 0;
+                for (let userId in data) {
+                    for (let ts in data[userId]) {
+                        totalBotol += data[userId][ts].botol || 0;
+                        totalTransaksi++;
+                    }
+                }
+                const totalRupiah = totalBotol * HARGA_PER_BOTOL;
+
+                // 3. ARSIPKAN data ke path terpisah (TIDAK terhapus dari dashboard admin)
+                const timestampArsip = Date.now();
+                const arsipRef = db.ref('/botol_history_arsip/' + timestampArsip);
+                await arsipRef.set({
+                    data: data,
+                    total_botol: totalBotol,
+                    total_rupiah: totalRupiah,
+                    total_transaksi: totalTransaksi,
+                    tanggal_arsip: new Date().toISOString(),
+                    tanggal_arsip_timestamp: timestampArsip,
+                    alasan: 'Penarikan investasi oleh investor',
+                    metode_pembayaran: selectedMethod ? selectedMethod.toUpperCase() : 'Tidak diketahui'
+                });
+
+                setStatus('✅ Data berhasil diarsipkan! (' + totalTransaksi + ' transaksi)', 'success');
+                console.log(`✅ Data diarsipkan: ${totalTransaksi} transaksi, ${totalBotol} botol`);
+
+                // 4. Hapus data utama (saldo investor menjadi 0)
+                setStatus('🗑️ Menghapus data utama...', 'loading');
+                await db.ref('/botol_history').remove();
+
+                setStatus('✅ Saldo berhasil direset! Data tetap di arsip admin', 'success');
+                console.log('✅ Data botol dihapus dari history utama');
+
+                // 5. Kembalikan informasi arsip
+                return {
+                    success: true,
+                    totalBotol: totalBotol,
+                    totalRupiah: totalRupiah,
+                    totalTransaksi: totalTransaksi,
+                    arsipId: timestampArsip
+                };
+
+            } catch (error) {
+                console.error('Error arsip & reset:', error);
+                setStatus('❌ Gagal: ' + error.message, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        // ===================== CATAT HISTORY PENARIKAN =====================
+        async function catatHistoryPenarikan(totalBotol, totalRupiah, metode, arsipId) {
+            try {
+                const timestamp = Date.now();
+                const data = {
+                    timestamp: timestamp,
+                    totalBotol: totalBotol,
+                    totalRupiah: totalRupiah,
+                    metode: metode,
+                    arsip_id: arsipId,
+                    status: 'pending_verifikasi',
+                    tanggal: new Date(timestamp).toISOString()
+                };
+
+                await db.ref('/withdraw_history/' + timestamp).set(data);
+                console.log('✅ History penarikan dicatat:', data);
+                return true;
+            } catch (error) {
+                console.error('Error mencatat history:', error);
+                return false;
+            }
+        }
+
+        // ===================== MODAL =====================
+        function openModal() {
+            selectedMethod = null;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            btnCairkan.disabled = true;
+            modal.classList.add('open');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('open');
+            document.body.style.overflow = '';
+            selectedMethod = null;
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            btnCairkan.disabled = true;
+        }
+
+        // ===================== EVENT LISTENER PILIH METODE =====================
+        paymentOptions.addEventListener('click', (e) => {
+            const option = e.target.closest('.payment-option');
+            if (!option) return;
+
+            document.querySelectorAll('.payment-option').forEach(el => el.classList.remove('selected'));
+            option.classList.add('selected');
+            selectedMethod = option.dataset.method;
+            btnCairkan.disabled = false;
+        });
+
+        // ===================== CAIRKAN → ARSIP + WHATSAPP =====================
+        async function cairkanInvestasi() {
+            if (isProcessing) return;
+
+            if (!selectedMethod) {
+                alert('Silakan pilih metode pembayaran terlebih dahulu.');
+                return;
+            }
+
+            // ambil total rupiah dari history
+            let totalBotol = allHistory.reduce((sum, item) => sum + item.botol, 0);
+            let totalRupiah = totalBotol * HARGA_PER_BOTOL;
+
+            if (totalRupiah < MIN_WITHDRAW) {
+                alert(`❌ Saldo investasi Anda Rp ${totalRupiah.toLocaleString('id-ID')}.\nMinimal penarikan Rp ${MIN_WITHDRAW.toLocaleString('id-ID')}.`);
+                return;
+            }
+
+            // Konfirmasi
+            if (!confirm(`⚠️ Anda akan menarik investasi sebesar Rp ${totalRupiah.toLocaleString('id-ID')}.\n\n` +
+                    `📦 Data history akan DIARSIPKAN (tetap tersimpan di admin).\n` +
+                    `💰 Saldo investasi akan menjadi Rp 0.\n\n` +
+                    `Lanjutkan?`)) {
+                return;
+            }
+
+            isProcessing = true;
+            btnCairkan.disabled = true;
+            btnTarik.disabled = true;
+            setStatus('⏳ Memproses penarikan...', 'loading');
+
+            try {
+                // 1. Arsipkan data dan reset saldo
+                const result = await arsipDanResetSaldo();
+
+                if (!result.success) {
+                    setStatus('❌ Gagal mengarsipkan data', 'error');
+                    isProcessing = false;
+                    btnCairkan.disabled = false;
+                    btnTarik.disabled = false;
+                    return;
+                }
+
+                // 2. Catat history penarikan
+                const metodeNama = {
+                    'bca': 'BCA',
+                    'bri': 'BRI',
+                    'mandiri': 'Mandiri',
+                    'dana': 'DANA',
+                    'ovo': 'OVO'
+                };
+                const metodeLabel = metodeNama[selectedMethod] || selectedMethod.toUpperCase();
+
+                await catatHistoryPenarikan(
+                    result.totalBotol,
+                    result.totalRupiah,
+                    metodeLabel,
+                    result.arsipId
+                );
+
+                // 3. Siapkan pesan WhatsApp
+                const message =
+                    `✅ *PENARIKAN INVESTASI RE-COIN*\n\n` +
+                    `📅 Tanggal: ${new Date().toLocaleString('id-ID')}\n` +
+                    `💚 Total botol: ${result.totalBotol.toLocaleString()} botol\n` +
+                    `💰 Nilai investasi: Rp ${result.totalRupiah.toLocaleString('id-ID')}\n` +
+                    `🏦 Metode pembayaran: ${metodeLabel}\n` +
+                    `📦 ID Arsip: ${result.arsipId}\n\n` +
+                    `📌 Status: Menunggu verifikasi admin\n` +
+                    `🔹 Saldo investasi telah direset menjadi Rp 0\n` +
+                    `🔹 Data history tetap tersimpan di arsip admin\n\n` +
+                    `Mohon diproses, terima kasih.`;
+
+                const encoded = encodeURIComponent(message);
+                const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encoded}`;
+
+                // 4. Buka WhatsApp
+                window.open(url, '_blank');
+
+                // 5. Tutup modal
+                closeModal();
+
+                // 6. Refresh data setelah reset
+                setStatus('🔄 Memuat ulang data...', 'loading');
+                setTimeout(() => {
+                    loadHistory();
+                }, 1000);
+
+                // 7. Notifikasi sukses
+                setTimeout(() => {
+                    alert('✅ Permintaan penarikan berhasil dikirim!\n\n' +
+                        '📦 Data history TERSIMPAN di arsip admin\n' +
+                        '💰 Saldo investasi Anda sekarang: Rp 0\n' +
+                        '📱 Silakan lanjutkan verifikasi di WhatsApp.');
+                }, 500);
+
+            } catch (error) {
+                console.error('Error proses penarikan:', error);
+                setStatus('❌ Error: ' + error.message, 'error');
+                alert('Terjadi kesalahan: ' + error.message);
+            } finally {
+                isProcessing = false;
+                btnCairkan.disabled = false;
+                btnTarik.disabled = false;
+            }
+        }
+
+        // ===================== EVENT BINDING =====================
+        btnTarik.addEventListener('click', () => {
+            if (isProcessing) return;
+
+            let totalBotol = allHistory.reduce((sum, item) => sum + item.botol, 0);
+            let totalRupiah = totalBotol * HARGA_PER_BOTOL;
+
+            if (totalRupiah < MIN_WITHDRAW) {
+                alert(`💡 Saldo investasi Anda saat ini: Rp ${totalRupiah.toLocaleString('id-ID')}\nMinimal penarikan Rp ${MIN_WITHDRAW.toLocaleString('id-ID')}.`);
+                return;
+            }
+            openModal();
+        });
+
+        closeModalBtn.addEventListener('click', closeModal);
+        btnBatalModal.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        btnCairkan.addEventListener('click', cairkanInvestasi);
+
+        // ===================== INIT =====================
+        loadHistory();
+
+        // Auto refresh tiap 60 detik
+        setInterval(() => {
+            if (!isProcessing) {
+                loadHistory();
+            }
+        }, 60000);
+    </script>
+</body>
+</html>
