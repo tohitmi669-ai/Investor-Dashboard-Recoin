@@ -165,6 +165,14 @@
             color: #0b7e66;
         }
 
+        .stat-card.bep-card {
+            background: linear-gradient(145deg, #fef9e7, #fdf6d0);
+            border-color: #f59e0b;
+        }
+        .stat-card.bep-card .stat-value {
+            color: #b48c28;
+        }
+
         .invest-action {
             display: flex;
             justify-content: center;
@@ -634,7 +642,6 @@
             font-weight: 700;
         }
 
-        /* filter tanggal */
         .filter-date {
             display: flex;
             align-items: center;
@@ -685,6 +692,21 @@
         .filter-date .btn-filter-reset:hover {
             background: #cbd5e1;
         }
+
+        .bep-progress {
+            margin-top: 6px;
+            height: 6px;
+            background: #e9edf2;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .bep-progress .bar {
+            height: 100%;
+            background: #f59e0b;
+            border-radius: 10px;
+            transition: width 0.4s ease;
+            width: 0%;
+        }
     </style>
 </head>
 <body>
@@ -726,10 +748,11 @@
                 <div class="stat-label">Saldo Investasi</div>
                 <div class="stat-value rupiah" id="totalRupiahDisplay">Rp 0</div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card bep-card">
                 <span class="stat-icon"><i class="fas fa-chart-line"></i></span>
-                <div class="stat-label">BEP (per botol)</div>
-                <div class="stat-value" id="bepDisplay">Rp 0</div>
+                <div class="stat-label">BEP (Modal Rp 2.500.000)</div>
+                <div class="stat-value rupiah" id="bepDisplay">Rp 0</div>
+                <div class="bep-progress"><div class="bar" id="bepProgressBar"></div></div>
             </div>
             <div class="stat-card">
                 <span class="stat-icon"><i class="fas fa-leaf"></i></span>
@@ -765,7 +788,7 @@
             <i class="fas fa-info-circle"></i> Minimal penarikan <strong>Rp 5.000</strong> · verifikasi via WhatsApp
         </div>
 
-        <!-- Riwayat Penarikan dengan filter tanggal -->
+        <!-- Riwayat Penarikan -->
         <div class="withdraw-history-section">
             <h3><i class="fas fa-history"></i> Riwayat Penarikan</h3>
             <div class="filter-date">
@@ -834,7 +857,8 @@
 
         // ===================== VARIABEL =====================
         const HARGA_PER_BOTOL = 50;
-        const MIN_WITHDRAW = 5000; // diubah dari 50.000 menjadi 5.000
+        const MIN_WITHDRAW = 5000;
+        const MODAL_BEP = 2500000; // Rp 2.500.000
         const WHATSAPP_NUMBER = '089524538835';
         const PASSWORD = 'recoin2026';
 
@@ -850,6 +874,7 @@
         const totalRupiahDisplay = document.getElementById('totalRupiahDisplay');
         const totalPemasukanDisplay = document.getElementById('totalPemasukanDisplay');
         const bepDisplay = document.getElementById('bepDisplay');
+        const bepProgressBar = document.getElementById('bepProgressBar');
         const emisiDisplay = document.getElementById('emisiDisplay');
         const statusText = document.getElementById('statusText');
         const statusIcon = document.getElementById('statusIcon');
@@ -862,7 +887,6 @@
         const withdrawTableBody = document.getElementById('withdrawTableBody');
         const notifDot = document.getElementById('notifDot');
 
-        // Filter
         const filterStartDate = document.getElementById('filterStartDate');
         const filterEndDate = document.getElementById('filterEndDate');
         const applyFilterBtn = document.getElementById('applyFilterBtn');
@@ -917,6 +941,36 @@
             }
         }
 
+        // ===================== HITUNG BEP =====================
+        function hitungBEP(totalBotol) {
+            const totalRupiah = totalBotol * HARGA_PER_BOTOL;
+            // BEP = sisa yang belum tercapai dari modal 2.500.000
+            const sisaBEP = Math.max(0, MODAL_BEP - totalRupiah);
+            const progress = Math.min(100, (totalRupiah / MODAL_BEP) * 100);
+            return { sisaBEP, progress, totalRupiah };
+        }
+
+        // ===================== UPDATE STATS =====================
+        function updateStats(totalBotol) {
+            const totalRupiah = totalBotol * HARGA_PER_BOTOL;
+            totalBotolDisplay.textContent = totalBotol.toLocaleString();
+            totalRupiahDisplay.textContent = 'Rp ' + totalRupiah.toLocaleString('id-ID');
+            totalPemasukanDisplay.textContent = 'Rp ' + totalRupiah.toLocaleString('id-ID');
+
+            const bep = hitungBEP(totalBotol);
+            bepDisplay.textContent = 'Rp ' + bep.sisaBEP.toLocaleString('id-ID');
+            bepProgressBar.style.width = bep.progress + '%';
+            if (bep.progress >= 100) {
+                bepProgressBar.style.background = '#0b7e66';
+                bepDisplay.textContent = '✅ LUNAS!';
+            } else {
+                bepProgressBar.style.background = '#f59e0b';
+            }
+
+            const emisi = totalBotol * 0.5;
+            emisiDisplay.textContent = emisi.toFixed(1) + ' kg';
+        }
+
         // ===================== LOAD HISTORY =====================
         function loadHistory() {
             setStatus('Memuat data...', 'loading');
@@ -939,13 +993,7 @@
                 }
                 allHistory.sort((a, b) => b.timestamp - a.timestamp);
 
-                const totalRupiah = totalBotol * HARGA_PER_BOTOL;
-                totalBotolDisplay.textContent = totalBotol.toLocaleString();
-                totalRupiahDisplay.textContent = 'Rp ' + totalRupiah.toLocaleString('id-ID');
-                totalPemasukanDisplay.textContent = 'Rp ' + totalRupiah.toLocaleString('id-ID');
-                bepDisplay.textContent = 'Rp ' + HARGA_PER_BOTOL;
-                const emisi = totalBotol * 0.5;
-                emisiDisplay.textContent = emisi.toFixed(1) + ' kg';
+                updateStats(totalBotol);
 
                 if (totalBotol > lastBotolCount) {
                     playNotificationSound();
@@ -1005,6 +1053,7 @@
                         setTimeout(() => { notifDot.style.display = 'none'; }, 5000);
                     }
                     lastBotolCount = total;
+                    updateStats(total);
                 });
             }, 10000);
         }
@@ -1031,20 +1080,16 @@
             }).catch(err => console.error(err));
         }
 
-        // ===================== FILTER TANGGAL =====================
+        // ===================== FILTER =====================
         function applyFilter() {
             const startVal = filterStartDate.value;
             const endVal = filterEndDate.value;
-
-            // Default start date = 2026-07-21
             let startDate = startVal ? new Date(startVal + 'T00:00:00') : new Date('2026-07-21T00:00:00');
             let endDate = endVal ? new Date(endVal + 'T23:59:59') : new Date();
-
             filteredWithdrawHistory = withdrawHistory.filter(item => {
                 const d = new Date(item.timestamp);
                 return d >= startDate && d <= endDate;
             });
-
             renderWithdrawTable();
         }
 
@@ -1073,7 +1118,6 @@
             withdrawTableBody.innerHTML = html;
         }
 
-        // ===================== EVENT FILTER =====================
         applyFilterBtn.addEventListener('click', applyFilter);
         resetFilterBtn.addEventListener('click', () => {
             filterStartDate.value = '2026-07-21';
@@ -1256,7 +1300,6 @@
             }
         }, 60000);
 
-        // Set default start date to 2026-07-21
         filterStartDate.value = '2026-07-21';
     </script>
 </body>
